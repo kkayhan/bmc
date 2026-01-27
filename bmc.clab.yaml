@@ -12,29 +12,29 @@ topology:
 #########################################################
   nodes:
     spine1:
-      type: ixrd3l
-      #startup-config: ./startup_configs/spine1.cfg
+      type: ixr-d3l
+      startup-config: ./startup_configs/spine1.cfg
     spine2:
-      type: ixrd3l
-      #startup-config: ./startup_configs/spine2.cfg
+      type: ixr-d3l
+      startup-config: ./startup_configs/spine2.cfg
     b-leaf1:
-      type: ixrd2l
-    #  startup-config: ./startup_configs/b-leaf1.cfg
+      type: ixr-d2l
+      startup-config: ./startup_configs/b-leaf1.cfg
     b-leaf2:
-      type: ixrd2l
-    #  startup-config: ./startup_configs/b-leaf2.cfg
+      type: ixr-d2l
+      startup-config: ./startup_configs/b-leaf2.cfg
     leaf1:
-      type: ixrd2l
-      #startup-config: ./startup_configs/leaf1.cfg
+      type: ixr-d2l
+      startup-config: ./startup_configs/leaf1.cfg
     leaf2:
-      type: ixrd2l
-      #startup-config: ./startup_configs/leaf2.cfg
+      type: ixr-d2l
+      startup-config: ./startup_configs/leaf2.cfg
     leaf3:
-      type: ixrd2l
-      #startup-config: ./startup_configs/leaf3.cfg
+      type: ixr-d2l
+      startup-config: ./startup_configs/leaf3.cfg
     leaf4:
-      type: ixrd2l
-      #startup-config: ./startup_configs/leaf4.cfg
+      type: ixr-d2l
+      startup-config: ./startup_configs/leaf4.cfg
 #########################################################
 #    frr1:
 #      kind: linux
