@@ -1,0 +1,78 @@
+name: evpn_ospf-unnumbered
+prefix: ""
+
+topology:
+  defaults:
+    kind: nokia_srlinux
+  kinds:
+    nokia_srlinux:
+      image: ghcr.io/nokia/srlinux:25.10.1
+    linux:
+      image: quay.io/frrouting/frr:10.3.0
+#########################################################
+  nodes:
+    spine1:
+      type: ixrd3l
+      #startup-config: ./startup_configs/spine1.cfg
+    spine2:
+      type: ixrd3l
+      #startup-config: ./startup_configs/spine2.cfg
+    b-leaf1:
+      type: ixrd2l
+    #  startup-config: ./startup_configs/b-leaf1.cfg
+    b-leaf2:
+      type: ixrd2l
+    #  startup-config: ./startup_configs/b-leaf2.cfg
+    leaf1:
+      type: ixrd2l
+      #startup-config: ./startup_configs/leaf1.cfg
+    leaf2:
+      type: ixrd2l
+      #startup-config: ./startup_configs/leaf2.cfg
+    leaf3:
+      type: ixrd2l
+      #startup-config: ./startup_configs/leaf3.cfg
+    leaf4:
+      type: ixrd2l
+      #startup-config: ./startup_configs/leaf4.cfg
+#########################################################
+#    frr1:
+#      kind: linux
+#      binds:
+#        - startup_configs/frr1.conf:/etc/frr/frr.conf
+#        - startup_configs/frr-daemons.conf:/etc/frr/daemons
+#      exec:
+#        - ip link set dev eth0 down
+#    frr2:
+#      kind: linux
+#      binds:
+#        - startup_configs/frr2.conf:/etc/frr/frr.conf
+#        - startup_configs/frr-daemons.conf:/etc/frr/daemons    
+#      exec:
+#        - ip link set dev eth0 down
+
+  links:
+  # Border Leaf - Spine
+    - endpoints: ["b-leaf1:e1-49", "spine1:e1-31"]
+    - endpoints: ["b-leaf1:e1-50", "spine2:e1-31"]
+    - endpoints: ["b-leaf2:e1-49", "spine1:e1-32"]
+    - endpoints: ["b-leaf2:e1-50", "spine2:e1-32"]
+  # Spine1 - Leaf
+    - endpoints: ["spine1:e1-1", "leaf1:e1-49"]
+    - endpoints: ["spine1:e1-2", "leaf2:e1-49"]
+    - endpoints: ["spine1:e1-3", "leaf3:e1-49"]
+    - endpoints: ["spine1:e1-4", "leaf4:e1-49"]
+  # Spine2 - Leaf
+    - endpoints: ["spine2:e1-1", "leaf1:e1-50"]
+    - endpoints: ["spine2:e1-2", "leaf2:e1-50"]
+    - endpoints: ["spine2:e1-3", "leaf3:e1-50"]
+    - endpoints: ["spine2:e1-4", "leaf4:e1-50"]
+
+#### Access ###
+#  # frr-1
+#    - endpoints: ["frr1:eth1", "leaf1:e1-1"]
+#    - endpoints: ["frr1:eth2", "leaf2:e1-1"]
+#
+#  # frr-2
+#    - endpoints: ["frr2:eth1", "leaf3:e1-1"]
+#    - endpoints: ["frr2:eth2", "leaf4:e1-1"]
