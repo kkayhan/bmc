@@ -8,7 +8,7 @@ topology:
     nokia_srlinux:
       image: ghcr.io/nokia/srlinux:25.10.1
     linux:
-      image: quay.io/frrouting/frr:10.3.0
+      image: ghcr.io/srl-labs/network-multitool
 #########################################################
   nodes:
     spine1:
@@ -36,20 +36,93 @@ topology:
       type: ixr-d2l
       startup-config: ./startup_configs/leaf4.cfg
 #########################################################
-#    frr1:
-#      kind: linux
-#      binds:
-#        - startup_configs/frr1.conf:/etc/frr/frr.conf
-#        - startup_configs/frr-daemons.conf:/etc/frr/daemons
-#      exec:
-#        - ip link set dev eth0 down
-#    frr2:
-#      kind: linux
-#      binds:
-#        - startup_configs/frr2.conf:/etc/frr/frr.conf
-#        - startup_configs/frr-daemons.conf:/etc/frr/daemons    
-#      exec:
-#        - ip link set dev eth0 down
+    server1:
+      kind: linux
+      exec:
+        - sudo ip link set eth0 down
+        - sudo ip link set eth1 down
+        - sudo ip link set eth2 down
+        - sudo ip link set eth3 down
+        - sudo ip link set eth4 down
+        
+        # Create Bonds with LACP (Mode 4 / 802.3ad)
+        # miimon 100 is required for LACP link monitoring
+        # lacp_rate fast requests packets every 1 second
+        - sudo ip link add bond0 type bond mode 802.3ad miimon 100 lacp_rate fast
+        - sudo ip link add bond1 type bond mode 802.3ad miimon 100 lacp_rate fast
+        
+        # Enslave Physical Interfaces
+        - sudo ip link set eth1 master bond0
+        - sudo ip link set eth2 master bond0
+        - sudo ip link set eth3 master bond1
+        - sudo ip link set eth4 master bond1
+        
+        # Bring Physical Interfaces and Bonds Up
+        - sudo ip link set eth1 up
+        - sudo ip link set eth2 up
+        - sudo ip link set eth3 up
+        - sudo ip link set eth4 up
+        - sudo ip link set bond0 up
+        - sudo ip link set bond1 up
+        
+        # Create VLAN 10 Interfaces (802.1Q)
+        - sudo ip link add link bond0 name bond0.10 type vlan id 10
+        - sudo ip link add link bond1 name bond1.10 type vlan id 10
+        
+        # Assign IPs to VLAN Interfaces
+        - sudo ip addr add 100.99.98.1/24 dev bond0.10
+        - sudo ip addr add 10.10.10.1/24 dev bond1.10
+        
+        # Bring VLAN Interfaces Up
+        - sudo ip link set bond0.10 up
+        - sudo ip link set bond1.10 up
+        
+        # Routing
+        - sudo ip route add default via 100.99.98.1
+
+    server2:
+      kind: linux
+      exec:
+        - sudo ip link set eth0 down
+        - sudo ip link set eth1 down
+        - sudo ip link set eth2 down
+        - sudo ip link set eth3 down
+        - sudo ip link set eth4 down
+        
+        # Create Bonds with LACP (Mode 4 / 802.3ad)
+        # miimon 100 is required for LACP link monitoring
+        # lacp_rate fast requests packets every 1 second
+        - sudo ip link add bond0 type bond mode 802.3ad miimon 100 lacp_rate fast
+        - sudo ip link add bond1 type bond mode 802.3ad miimon 100 lacp_rate fast
+        
+        # Enslave Physical Interfaces
+        - sudo ip link set eth1 master bond0
+        - sudo ip link set eth2 master bond0
+        - sudo ip link set eth3 master bond1
+        - sudo ip link set eth4 master bond1
+        
+        # Bring Physical Interfaces and Bonds Up
+        - sudo ip link set eth1 up
+        - sudo ip link set eth2 up
+        - sudo ip link set eth3 up
+        - sudo ip link set eth4 up
+        - sudo ip link set bond0 up
+        - sudo ip link set bond1 up
+        
+        # Create VLAN 10 Interfaces (802.1Q)
+        - sudo ip link add link bond0 name bond0.10 type vlan id 10
+        - sudo ip link add link bond1 name bond1.10 type vlan id 10
+        
+        # Assign IPs to VLAN Interfaces
+        - sudo ip addr add 100.99.98.2/24 dev bond0.10
+        - sudo ip addr add 10.10.10.2/24 dev bond1.10
+        
+        # Bring VLAN Interfaces Up
+        - sudo ip link set bond0.10 up
+        - sudo ip link set bond1.10 up
+        
+        # Routing
+        - sudo ip route add default via 100.99.98.1
 
   links:
   # Border Leaf - Spine
@@ -69,10 +142,20 @@ topology:
     - endpoints: ["spine2:e1-4", "leaf4:e1-50"]
 
 #### Access ###
-#  # frr-1
-#    - endpoints: ["frr1:eth1", "leaf1:e1-1"]
-#    - endpoints: ["frr1:eth2", "leaf2:e1-1"]
-#
-#  # frr-2
-#    - endpoints: ["frr2:eth1", "leaf3:e1-1"]
-#    - endpoints: ["frr2:eth2", "leaf4:e1-1"]
+  # server-1
+      #bond0
+    - endpoints: ["server1:eth1", "leaf1:e1-1"]
+    - endpoints: ["server1:eth2", "leaf2:e1-1"]
+
+      #bond1
+    - endpoints: ["server1:eth3", "leaf1:e1-2"]
+    - endpoints: ["server1:eth4", "leaf2:e1-2"]
+
+  # server-2
+    #bond0
+    - endpoints: ["server2:eth1", "leaf3:e1-1"]
+    - endpoints: ["server2:eth2", "leaf4:e1-1"]
+    
+    #bond1
+    - endpoints: ["server2:eth3", "leaf3:e1-2"]
+    - endpoints: ["server2:eth4", "leaf4:e1-2"]
