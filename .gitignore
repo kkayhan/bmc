@@ -5,4 +5,4 @@
 !bmc.clab.yaml
 !README.md
 !.gitignore
-!/startup_configs/
+!/startup_configs/**
