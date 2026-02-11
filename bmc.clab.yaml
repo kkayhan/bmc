@@ -181,8 +181,13 @@ topology:
     - endpoints: ["wan-core:e1-3", "pic1:e1-50"]
     - endpoints: ["wan-core:e1-4", "pic2:e1-50"]
 
-    # WAN - DC Connections
+  # WAN - DC Connections
     - endpoints: ["dic1:e1-1", "b-leaf1:e1-1"]
+    - endpoints: ["dic1:e1-2", "b-leaf1:e1-2"]
+    - endpoints: ["pic1:e1-1", "b-leaf1:e1-3"]
+    - endpoints: ["pic1:e1-2", "b-leaf1:e1-4"]
+
     - endpoints: ["dic2:e1-1", "b-leaf2:e1-1"]
-    - endpoints: ["pic1:e1-1", "b-leaf1:e1-2"]
-    - endpoints: ["pic2:e1-1", "b-leaf2:e1-2"]
+    - endpoints: ["dic2:e1-2", "b-leaf2:e1-2"]
+    - endpoints: ["pic2:e1-1", "b-leaf2:e1-3"]
+    - endpoints: ["pic2:e1-2", "b-leaf2:e1-4"]
