@@ -20,9 +20,13 @@ topology:
     b-leaf1:
       type: ixr-d2l
       startup-config: ./startup_configs/b-leaf1.cfg
+      binds:
+        - ./startup_configs/prevent_blackhole.py:/etc/opt/srlinux/eventmgr/prevent_blackhole.py
     b-leaf2:
       type: ixr-d2l
       startup-config: ./startup_configs/b-leaf2.cfg
+      binds:
+        - ./startup_configs/prevent_blackhole.py:/etc/opt/srlinux/eventmgr/prevent_blackhole.py
     leaf1:
       type: ixr-d2l
       startup-config: ./startup_configs/leaf1.cfg
