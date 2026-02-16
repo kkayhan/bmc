@@ -49,6 +49,66 @@ ssh admin@server1
 ssh admin@server2
 ```
 
+### Useful SR Linux Commands
+
+Once connected to an SR Linux node (e.g. `ssh spine1`), the following commands help inspect the running state of the fabric.
+
+#### OSPF
+
+**Show the full OSPF configuration in flat set-based format:**
+```
+info flat network-instance default protocols ospf
+```
+Displays the complete OSPF instance configuration including area assignments, interface types, and ECMP settings as flat `set` commands.
+
+**Show OSPF neighbor adjacencies:**
+```
+show network-instance default protocols ospf neighbor
+```
+Lists all OSPF neighbors with their router-id, adjacency state, priority, and dead timer -- useful for verifying that all fabric links have formed full adjacencies.
+
+#### BGP / EVPN
+
+**Show the full BGP configuration in flat set-based format:**
+```
+info flat network-instance default protocols bgp
+```
+Displays the complete BGP configuration including AS number, address families, peer groups, route-reflector settings, and dynamic neighbor acceptance policies.
+
+**Show BGP neighbor sessions:**
+```
+show network-instance default protocols bgp neighbor
+```
+Lists all BGP peers with their state, uptime, address-family, and route counts (Rx/Active/Tx) -- useful for confirming that all EVPN sessions are established and routes are being exchanged.
+
+#### EVPN Bridge Table
+
+**Show the MAC address table for the external access service:**
+```
+show network-instance l2_evpn_bond0 bridge-table mac-table all
+```
+Displays all MAC addresses learned in the `l2_evpn_bond0` mac-vrf, including locally learned MACs, EVPN-learned remote MACs, and EVPN-static entries (such as the anycast-gw MAC) -- useful for troubleshooting L2 forwarding and verifying EVPN Type-2 route distribution.
+
+**Show the proxy ARP table:**
+```
+show network-instance l2_evpn_bond0 bridge-table proxy-arp all
+```
+Displays all IP-to-MAC bindings cached by the proxy ARP function -- useful for confirming that the leaf switch can answer ARP requests locally without flooding them across the VXLAN fabric.
+
+#### WAN Peering (on border-leaves)
+
+**Show eBGP neighbor sessions in the customer VRF:**
+```
+show network-instance cust-vrf-1 protocols bgp neighbor
+```
+Displays the eBGP peering status between the border-leaf and its PIC router inside `cust-vrf-1`, including session state, uptime, and IPv4-unicast route counts -- the session monitored by the blackhole prevention event handler.
+
+**Show the IP route table for the customer VRF:**
+```
+show network-instance cust-vrf-1 route-table
+```
+Displays all IPv4 routes in `cust-vrf-1`, including locally connected subnets (IRB, peering links), BGP-learned remote prefixes from the WAN (such as `123.123.123.123/32`), and their next-hops -- useful for verifying end-to-end reachability between the DC and WAN.
+
 ### Destroy
 
 ```bash
@@ -57,7 +117,7 @@ sudo containerlab destroy -t bmc.clab.yaml
 
 ## Topology
 
-![Lab Topology](topology.svg)
+![Lab Topology](topology.png)
 
 ### Node Inventory
 
@@ -234,63 +294,3 @@ A loopback address **`123.123.123.123/32`** is configured on `wan-core` inside `
 | server1 / server2 | server2 / server1 (`10.10.10.x` via bond1) | Reachable |
 | server1 / server2 | IRB anycast GW `100.99.98.254` | Reachable |
 | server1 / server2 | Remote IP `123.123.123.123` | Reachable |
-
-## Useful SR Linux Commands
-
-Once connected to an SR Linux node (e.g. `ssh spine1`), the following commands help inspect the running state of the fabric.
-
-### OSPF
-
-**Show the full OSPF configuration in flat set-based format:**
-```
-info flat network-instance default protocols ospf
-```
-Displays the complete OSPF instance configuration including area assignments, interface types, and ECMP settings as flat `set` commands.
-
-**Show OSPF neighbor adjacencies:**
-```
-show network-instance default protocols ospf neighbor
-```
-Lists all OSPF neighbors with their router-id, adjacency state, priority, and dead timer -- useful for verifying that all fabric links have formed full adjacencies.
-
-### BGP / EVPN
-
-**Show the full BGP configuration in flat set-based format:**
-```
-info flat network-instance default protocols bgp
-```
-Displays the complete BGP configuration including AS number, address families, peer groups, route-reflector settings, and dynamic neighbor acceptance policies.
-
-**Show BGP neighbor sessions:**
-```
-show network-instance default protocols bgp neighbor
-```
-Lists all BGP peers with their state, uptime, address-family, and route counts (Rx/Active/Tx) -- useful for confirming that all EVPN sessions are established and routes are being exchanged.
-
-### EVPN Bridge Table
-
-**Show the MAC address table for the external access service:**
-```
-show network-instance l2_evpn_bond0 bridge-table mac-table all
-```
-Displays all MAC addresses learned in the `l2_evpn_bond0` mac-vrf, including locally learned MACs, EVPN-learned remote MACs, and EVPN-static entries (such as the anycast-gw MAC) -- useful for troubleshooting L2 forwarding and verifying EVPN Type-2 route distribution.
-
-**Show the proxy ARP table:**
-```
-show network-instance l2_evpn_bond0 bridge-table proxy-arp all
-```
-Displays all IP-to-MAC bindings cached by the proxy ARP function -- useful for confirming that the leaf switch can answer ARP requests locally without flooding them across the VXLAN fabric.
-
-### WAN Peering (on border-leaves)
-
-**Show eBGP neighbor sessions in the customer VRF:**
-```
-show network-instance cust-vrf-1 protocols bgp neighbor
-```
-Displays the eBGP peering status between the border-leaf and its PIC router inside `cust-vrf-1`, including session state, uptime, and IPv4-unicast route counts -- the session monitored by the blackhole prevention event handler.
-
-**Show the IP route table for the customer VRF:**
-```
-show network-instance cust-vrf-1 route-table
-```
-Displays all IPv4 routes in `cust-vrf-1`, including locally connected subnets (IRB, peering links), BGP-learned remote prefixes from the WAN (such as `123.123.123.123/32`), and their next-hops -- useful for verifying end-to-end reachability between the DC and WAN.

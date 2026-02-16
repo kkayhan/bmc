@@ -4,6 +4,7 @@
 # Un-ignore specific files and folders
 !bmc.clab.yaml
 !README.md
+!topology.png
 !.gitignore
 !/startup_configs/
 !/startup_configs/**
