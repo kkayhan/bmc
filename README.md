@@ -2,60 +2,62 @@
 
 This [Containerlab](https://containerlab.dev/) project deploys a fully functional **EVPN/VXLAN data center fabric** interconnected to a **WAN/peering domain** via border-leaf switches. The entire lab runs on **Nokia SR Linux** (release 25.10.2) and demonstrates a realistic DC + WAN integration scenario with dual-homed servers, OSPF unnumbered underlay, iBGP EVPN overlay, and traffic blackhole prevention using event-handler automation.
 
-## Topology Overview
+## Quick Start
 
-```
-                        +-----------+
-                        | wan-core  |
-                        | .100      |
-                        | lo: 123.  |
-                        | 123.123.  |
-                        | 123/32    |
-                        +-----+-----+
-                       /   |     |   \
-                      /    |     |    \
-                +------+ +------+ +------+ +------+
-                | dic1 | | dic2 | | pic1 | | pic2 |
-                | .101 | | .102 | | .201 | | .202 |
-                +--+---+ +--+---+ +--+---+ +--+---+
-                   |  \     /  |     |  \     /  |
-              lag1 |   \   /   | lag1 |   \   /   |
-                   |    \ /    |      |    \ /    |
-                   |     X     |      |     X     |
-                   |    / \    |      |    / \    |
-              lag1 |   /   \   | lag1  |  /   \   |
-                +--+---+ +--+---+  +--+---+ +--+---+
-                |b-leaf1| |b-leaf2|  (same)  (same)
-                |  .11  | |  .12  |
-                +--+--+-+ +-+--+--+
-                   |  |     |  |
-              e1-49|  |e1-50|  |
-                   |  |     |  |
-            +------+--+-----+--+------+
-            |                          |
-        +---+----+            +--------+--+
-        | spine1 |            |  spine2   |
-        |  .100  |            |   .200    |
-        | (RR)   |            |   (RR)    |
-        +--+--+--+            +--+--+--+--+
-          /| |\                 /| |\ \
-         / | | \               / | | \ \
-        /  | |  \             /  | |  \ \
-+------+ +-+----+ +------+ +------+ +------+ +------+
-| leaf1| | leaf2| | leaf3| | leaf4| (same)  | (same)|
-|  .1  | |  .2  | |  .3  | |  .4  |         |       |
-+--+---+ +--+---+ +--+---+ +--+---+
-   |  |     |  |     |  |     |  |
-  lag1 lag2 lag1 lag2 lag1 lag2 lag1 lag2
-   |  |     |  |     |  |     |  |
-   +--+--+--+--+     +--+--+--+--+
-   | server1 |        | server2 |
-   | bond0   |        | bond0   |
-   | bond1   |        | bond1   |
-   +---------+        +---------+
+### Prerequisites
+
+A Linux machine with [Containerlab](https://containerlab.dev/install/) installed. All required container images are pulled automatically during deployment.
+
+### Clone and Deploy
+
+```bash
+git clone https://github.com/kkayhan/bmc.git
+cd bmc
+sudo containerlab deploy -t bmc.clab.yaml
 ```
 
-> All loopback addresses shown are the last octet of `192.168.100.x/32` (DC fabric) or `100.1.1.x/32` (WAN domain).
+### Verify Connectivity
+
+```bash
+# Check server1 can reach server2 via external service
+ssh admin@server1 ping 100.99.98.2
+
+# Check server1 can reach server2 via internal service
+ssh admin@server1 ping 10.10.10.2
+
+# Check server1 can reach the anycast IRB gateway
+ssh admin@server1 ping 100.99.98.254
+
+# Check server1 can reach the remote "internet" IP on wan-core
+ssh admin@server1 ping 123.123.123.123
+```
+
+### Accessing the Nodes
+
+**SR Linux nodes** -- SSH directly using the node name. Containerlab handles credentials automatically:
+
+```bash
+ssh spine1
+ssh b-leaf1
+ssh leaf1
+```
+
+**Linux servers** (server1, server2) -- SSH using user `admin` with password `multit00l`:
+
+```bash
+ssh admin@server1
+ssh admin@server2
+```
+
+### Destroy
+
+```bash
+sudo containerlab destroy -t bmc.clab.yaml
+```
+
+## Topology
+
+![Lab Topology](topology.svg)
 
 ### Node Inventory
 
@@ -233,88 +235,62 @@ A loopback address **`123.123.123.123/32`** is configured on `wan-core` inside `
 | server1 / server2 | IRB anycast GW `100.99.98.254` | Reachable |
 | server1 / server2 | Remote IP `123.123.123.123` | Reachable |
 
-## Quick Start
+## Useful SR Linux Commands
 
-### Prerequisites
+Once connected to an SR Linux node (e.g. `ssh spine1`), the following commands help inspect the running state of the fabric.
 
-- [Containerlab](https://containerlab.dev/install/) installed
-- SR Linux container image: `ghcr.io/nokia/srlinux:25.10.2`
-- Linux multitool image: `ghcr.io/srl-labs/network-multitool`
+### OSPF
 
-### Deploy
-
-```bash
-cd bmc
-sudo containerlab deploy -t bmc.clab.yaml
+**Show the full OSPF configuration in flat set-based format:**
 ```
-
-### Verify
-
-```bash
-# Check server1 can reach server2 via external service
-docker exec -it clab-evpn_ospf-unnumbered-server1 ping 100.99.98.2
-
-# Check server1 can reach server2 via internal service
-docker exec -it clab-evpn_ospf-unnumbered-server1 ping 10.10.10.2
-
-# Check server1 can reach the anycast IRB gateway
-docker exec -it clab-evpn_ospf-unnumbered-server1 ping 100.99.98.254
-
-# Check server1 can reach the remote "internet" IP on wan-core
-docker exec -it clab-evpn_ospf-unnumbered-server1 ping 123.123.123.123
+info flat network-instance default protocols ospf
 ```
+Displays the complete OSPF instance configuration including area assignments, interface types, and ECMP settings as flat `set` commands.
 
-### Access Nodes
-
-```bash
-# SSH into any SR Linux node
-ssh admin@clab-evpn_ospf-unnumbered-spine1
-
-# Exec into a server container
-docker exec -it clab-evpn_ospf-unnumbered-server1 bash
+**Show OSPF neighbor adjacencies:**
 ```
-
-### Destroy
-
-```bash
-sudo containerlab destroy -t bmc.clab.yaml
+show network-instance default protocols ospf neighbor
 ```
+Lists all OSPF neighbors with their router-id, adjacency state, priority, and dead timer -- useful for verifying that all fabric links have formed full adjacencies.
 
-## File Structure
+### BGP / EVPN
 
+**Show the full BGP configuration in flat set-based format:**
 ```
-bmc/
-├── bmc.clab.yaml                        # Containerlab topology definition
-├── topology.svg                         # Visual topology diagram
-├── README.md                            # This file
-└── startup_configs/
-    ├── spine1.cfg                       # Spine 1 (route reflector)
-    ├── spine2.cfg                       # Spine 2 (route reflector)
-    ├── b-leaf1.cfg                      # Border Leaf 1
-    ├── b-leaf2.cfg                      # Border Leaf 2
-    ├── leaf1.cfg                        # Leaf 1 (server1 leg A)
-    ├── leaf2.cfg                        # Leaf 2 (server1 leg B)
-    ├── leaf3.cfg                        # Leaf 3 (server2 leg A)
-    ├── leaf4.cfg                        # Leaf 4 (server2 leg B)
-    ├── dic1.cfg                         # DIC Peering Router 1
-    ├── dic2.cfg                         # DIC Peering Router 2
-    ├── pic1.cfg                         # PIC Peering Router 1
-    ├── pic2.cfg                         # PIC Peering Router 2
-    ├── wan-core.cfg                     # WAN Core (route reflector)
-    └── prevent_blackhole.py             # Event handler script
+info flat network-instance default protocols bgp
 ```
+Displays the complete BGP configuration including AS number, address families, peer groups, route-reflector settings, and dynamic neighbor acceptance policies.
 
-## Key Technologies
+**Show BGP neighbor sessions:**
+```
+show network-instance default protocols bgp neighbor
+```
+Lists all BGP peers with their state, uptime, address-family, and route counts (Rx/Active/Tx) -- useful for confirming that all EVPN sessions are established and routes are being exchanged.
 
-| Technology | Where | Purpose |
-|-----------|-------|---------|
-| OSPF Unnumbered | DC fabric + WAN | Underlay reachability without per-link IP addressing |
-| iBGP EVPN | DC fabric (AS 65000) + WAN (AS 1) | Overlay control plane for VXLAN services |
-| VXLAN | Fabric-wide | Data plane encapsulation for L2/L3 services |
-| EVPN Anycast Gateway | Border-leaves | Consistent default gateway for servers |
-| EVPN All-Active Multi-Homing | Leaf pairs | Redundant, load-balanced server connectivity |
-| LACP (802.3ad) | Servers + leaf/WAN links | Link aggregation with fast rate |
-| eBGP | Border-leaf to PIC (cust-vrf-1) | DC-to-WAN route exchange |
-| Proxy ARP | Leaf switches | Local ARP resolution, no flooding |
-| BFD | All BGP + OSPF peerings | Sub-second failure detection |
-| Event Handler | Border-leaves | Blackhole prevention automation |
+### EVPN Bridge Table
+
+**Show the MAC address table for the external access service:**
+```
+show network-instance l2_evpn_bond0 bridge-table mac-table all
+```
+Displays all MAC addresses learned in the `l2_evpn_bond0` mac-vrf, including locally learned MACs, EVPN-learned remote MACs, and EVPN-static entries (such as the anycast-gw MAC) -- useful for troubleshooting L2 forwarding and verifying EVPN Type-2 route distribution.
+
+**Show the proxy ARP table:**
+```
+show network-instance l2_evpn_bond0 bridge-table proxy-arp all
+```
+Displays all IP-to-MAC bindings cached by the proxy ARP function -- useful for confirming that the leaf switch can answer ARP requests locally without flooding them across the VXLAN fabric.
+
+### WAN Peering (on border-leaves)
+
+**Show eBGP neighbor sessions in the customer VRF:**
+```
+show network-instance cust-vrf-1 protocols bgp neighbor
+```
+Displays the eBGP peering status between the border-leaf and its PIC router inside `cust-vrf-1`, including session state, uptime, and IPv4-unicast route counts -- the session monitored by the blackhole prevention event handler.
+
+**Show the IP route table for the customer VRF:**
+```
+show network-instance cust-vrf-1 route-table
+```
+Displays all IPv4 routes in `cust-vrf-1`, including locally connected subnets (IRB, peering links), BGP-learned remote prefixes from the WAN (such as `123.123.123.123/32`), and their next-hops -- useful for verifying end-to-end reachability between the DC and WAN.
