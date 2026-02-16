@@ -8,7 +8,7 @@ def event_handler_main(in_json_str):
     persistent_data = in_json.get("persistent-data", {})
 
     iface = options["interface"]
-    grace_period = int(options.get("grace-period", "30"))
+    grace_period = int(options.get("grace-period", "30")) * 1000
 
     # Split "irb0.10" into "irb0" and "10" for the SRLinux schema path
     parts = iface.split(".")
