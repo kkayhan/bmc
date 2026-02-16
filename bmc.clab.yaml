@@ -6,7 +6,7 @@ topology:
     kind: nokia_srlinux
   kinds:
     nokia_srlinux:
-      image: ghcr.io/nokia/srlinux:25.10.1
+      image: ghcr.io/nokia/srlinux:25.10.2
     linux:
       image: ghcr.io/srl-labs/network-multitool
 #########################################################
@@ -64,6 +64,12 @@ topology:
         - sudo ip link set eth3 down
         - sudo ip link set eth4 down
         
+        ## Set default route for SSH traffic (port 22) only
+        - ip route add default via 172.20.20.1 table 100
+        - iptables -t mangle -A OUTPUT -p tcp --dport 22 -j MARK --set-mark 1
+        - ip rule add fwmark 1 table 100
+        - sudo ip link set eth0 up
+
         # Create Bonds with LACP (Mode 4 / 802.3ad)
         # miimon 100 is required for LACP link monitoring
         # lacp_rate fast requests packets every 1 second
@@ -107,6 +113,12 @@ topology:
         - sudo ip link set eth2 down
         - sudo ip link set eth3 down
         - sudo ip link set eth4 down
+
+        ## Set default route for SSH traffic (port 22) only
+        - ip route add default via 172.20.20.1 table 100
+        - iptables -t mangle -A OUTPUT -p tcp --dport 22 -j MARK --set-mark 1
+        - ip rule add fwmark 1 table 100
+        - sudo ip link set eth0 up
         
         # Create Bonds with LACP (Mode 4 / 802.3ad)
         # miimon 100 is required for LACP link monitoring
