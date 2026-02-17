@@ -108,6 +108,7 @@ topology:
     server2:
       kind: linux
       exec:
+        - echo 'admin:admin' | sudo chpasswd
         - sudo ip link set eth0 down
         - sudo ip link set eth1 down
         - sudo ip link set eth2 down

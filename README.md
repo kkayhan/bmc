@@ -13,7 +13,13 @@ A Linux machine with [Containerlab](https://containerlab.dev/install/) installed
 ```bash
 git clone https://github.com/kkayhan/bmc.git
 cd bmc
-sudo containerlab deploy -t bmc.clab.yaml
+sudo containerlab deploy
+```
+
+### Destroy
+
+```bash
+sudo containerlab destroy
 ```
 
 ### Verify Connectivity
@@ -109,11 +115,7 @@ show network-instance cust-vrf-1 route-table
 ```
 Displays all IPv4 routes in `cust-vrf-1`, including locally connected subnets (IRB, peering links), BGP-learned remote prefixes from the WAN (such as `123.123.123.123/32`), and their next-hops -- useful for verifying end-to-end reachability between the DC and WAN.
 
-### Destroy
 
-```bash
-sudo containerlab destroy -t bmc.clab.yaml
-```
 
 ## Topology
 
