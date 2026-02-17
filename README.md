@@ -55,11 +55,9 @@ ssh admin@server1
 ssh admin@server2
 ```
 
-### Useful SR Linux Commands
+## Useful SR Linux Commands
 
 Once connected to an SR Linux node (e.g. `ssh spine1`), the following commands help inspect the running state of the fabric.
-
-#### OSPF
 
 **Show the full OSPF configuration in flat set-based format:**
 ```
@@ -73,8 +71,6 @@ show network-instance default protocols ospf neighbor
 ```
 Lists all OSPF neighbors with their router-id, adjacency state, priority, and dead timer -- useful for verifying that all fabric links have formed full adjacencies.
 
-#### BGP / EVPN
-
 **Show the full BGP configuration in flat set-based format:**
 ```
 info flat network-instance default protocols bgp
@@ -86,8 +82,6 @@ Displays the complete BGP configuration including AS number, address families, p
 show network-instance default protocols bgp neighbor
 ```
 Lists all BGP peers with their state, uptime, address-family, and route counts (Rx/Active/Tx) -- useful for confirming that all EVPN sessions are established and routes are being exchanged.
-
-#### EVPN Bridge Table
 
 **Show the MAC address table for the external access service:**
 ```
@@ -101,7 +95,7 @@ show network-instance l2_evpn_bond0 bridge-table proxy-arp all
 ```
 Displays all IP-to-MAC bindings cached by the proxy ARP function -- useful for confirming that the leaf switch can answer ARP requests locally without flooding them across the VXLAN fabric.
 
-#### WAN Peering (on border-leaves)
+##### WAN Peering (on border-leaves)
 
 **Show eBGP neighbor sessions in the customer VRF:**
 ```
